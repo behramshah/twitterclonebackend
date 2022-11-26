@@ -1,11 +1,13 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
 
 import { validationResult } from 'express-validator';
 import { UserModel, UserModelInterface, UserModelDocumentInterface } from '../models/UserModel';
 import { generateMD5 } from '../core/utils/generateHash';
 import { sendEmail } from '../core/utils/sendEmail';
-import { isValidObjectId } from '../core/utils/isValidObjectId';
+
+const isValidObjectId = mongoose.Types.ObjectId.isValid;
 
 class UserController {
   async index(_: any, res: express.Response): Promise<void> {
@@ -33,7 +35,7 @@ class UserController {
         return;
       }
 
-      const user = await UserModel.findById(userId).populate('tweets').exec();
+      const user = await UserModel.findById(userId).exec();
 
       if (!user) {
         res.status(404).send();
@@ -52,7 +54,7 @@ class UserController {
     }
   }
 
-  async create(req: express.Request | any, res: express.Response): Promise<void> {
+  async create(req: express.Request, res: express.Response): Promise<void> {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -60,14 +62,12 @@ class UserController {
         return;
       }
 
-      const randomStr = Math.random().toString();
-
       const data: UserModelInterface = {
         email: req.body.email,
         username: req.body.username,
         fullname: req.body.fullname,
         password: generateMD5(req.body.password + process.env.SECRET_KEY),
-        confirmHash: generateMD5(process.env.SECRET_KEY + randomStr || randomStr),
+        confirmHash: generateMD5(process.env.SECRET_KEY || Math.random().toString()),
       };
 
       const user = await UserModel.create(data);
@@ -81,7 +81,6 @@ class UserController {
             process.env.PORT || 8888
           }/users/verify?hash=${data.confirmHash}">link</a>`,
         },
-
         (err: Error | null) => {
           if (err) {
             res.status(500).json({
@@ -117,19 +116,13 @@ class UserController {
 
       if (user) {
         user.confirmed = true;
-        await user.save();
+        user.save();
 
         res.json({
           status: 'success',
-          data: {
-            ...user.toJSON(),
-            token: jwt.sign({ data: user.toJSON() }, process.env.SECRET_KEY || '123', {
-              expiresIn: '30 days',
-            }),
-          },
         });
       } else {
-        res.status(404).json({ status: 'error', message: 'Пользователь не найден' });
+        res.status(404).json({ status: 'error', message: 'User not found' });
       }
     } catch (error) {
       res.status(500).json({
@@ -139,7 +132,7 @@ class UserController {
     }
   }
 
-  async afterLogin(req: express.Request | any, res: express.Response): Promise<void> {
+  async afterLogin(req: express.Request, res: express.Response): Promise<void> {
     try {
       const user = req.user ? (req.user as UserModelDocumentInterface).toJSON() : undefined;
       res.json({
@@ -159,7 +152,7 @@ class UserController {
     }
   }
 
-  async getUserInfo(req: express.Request | any, res: express.Response): Promise<void> {
+  async getUserInfo(req: express.Request, res: express.Response): Promise<void> {
     try {
       const user = req.user ? (req.user as UserModelDocumentInterface).toJSON() : undefined;
       res.json({

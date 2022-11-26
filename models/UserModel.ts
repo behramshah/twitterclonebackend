@@ -11,48 +11,41 @@ export interface UserModelInterface {
   location?: string;
   about?: string;
   website?: string;
-  tweets?: string[];
 }
 
 export type UserModelDocumentInterface = UserModelInterface & Document;
 
-const UserSchema = new Schema<UserModelInterface>(
-  {
-    email: {
-      unique: true,
-      required: true,
-      type: String,
-    },
-    fullname: {
-      required: true,
-      type: String,
-    },
-    username: {
-      unique: true,
-      required: true,
-      type: String,
-    },
-    password: {
-      required: true,
-      type: String,
-    },
-    confirmHash: {
-      required: true,
-      type: String,
-    },
-    confirmed: {
-      type: Boolean,
-      default: false,
-    },
-    location: String,
-    about: String,
-    website: String,
-    tweets: [{ type: Schema.Types.ObjectId, ref: 'Tweet' }],
+const UserSchema = new Schema<UserModelInterface>({
+  email: {
+    unique: true,
+    required: true,
+    type: String,
   },
-  {
-    timestamps: true,
+  fullname: {
+    required: true,
+    type: String,
   },
-);
+  username: {
+    unique: true,
+    required: true,
+    type: String,
+  },
+  password: {
+    required: true,
+    type: String,
+  },
+  confirmHash: {
+    required: true,
+    type: String,
+  },
+  confirmed: {
+    type: Boolean,
+    default: false,
+  },
+  location: String,
+  about: String,
+  website: String,
+});
 
 UserSchema.set('toJSON', {
   transform: function (_, obj) {
