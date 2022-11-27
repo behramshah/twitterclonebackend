@@ -1,13 +1,13 @@
 import express from 'express';
-import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
 
 import { validationResult } from 'express-validator';
 import { UserModel, UserModelInterface, UserModelDocumentInterface } from '../models/UserModel';
 import { generateMD5 } from '../core/utils/generateHash';
 import { sendEmail } from '../core/utils/sendEmail';
+import { isValidObjectId } from '../core/utils/isValidObjectId';
 
-const isValidObjectId = mongoose.Types.ObjectId.isValid;
+
 
 class UserController {
   async index(_: any, res: express.Response): Promise<void> {
@@ -79,7 +79,7 @@ class UserController {
           subject: 'Mail confirmation',
           html: `For e-mail confirmation follow <a href="http://localhost:${
             process.env.PORT || 8888
-          }/users/verify?hash=${data.confirmHash}">link</a>`,
+          }/auth/verify?hash=${data.confirmHash}">link</a>`,
         },
         (err: Error | null) => {
           if (err) {
